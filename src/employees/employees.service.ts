@@ -14,50 +14,23 @@ import { checkUserActive } from 'src/utils/checkUserActive';
 export class EmployeesService {
   private readonly listId: string;
   private readonly siteId: string;
-  private readonly baseUrl: string;
   constructor(
     private readonly sharepointService: SharepointService,
     private readonly configService: ConfigService,
   ) {
     this.siteId = this.configService.get<string>('SITE_ID');
     this.listId = this.configService.get<string>('LIST_ID');
-    this.baseUrl = this.configService.get<string>('BASE_URL');
-
-    console.log('Site ID:', this.siteId);
-    console.log('List ID:', this.listId);
   }
 
-
-  async getEmployees(token: string): Promise<EmployeeDto[]> {
-    console.log('getting principals', token);
-    try {
-      const response = await axios.get(`${this.baseUrl}/employees`, { headers: { Authorization: `Bearer ${token}` } });
-      return response.data.employee.map((employee: any) => ({
-        Empresa: employee.Empresa || '',
-        CPF: employee.CPF || '',
-        Colaborador: employee.Nome_Colaborador || '',
-        Matricula: employee.Matricula || '',
-        DataAdm: employee.Data_Admissao || '',
-        DataNasc: employee.Data_Nascimento || '',
-        DescSituacao: employee.DESC_SITUACAO || '',
-        Cargo: employee.Titulo_Cargo || '',
-        descCargo: employee.DESC_CARGO || ''
-      }));
-    } catch (err) {
-      throw new HttpException('Erro ao acessar a API', HttpStatus.BAD_REQUEST);
-    }
-  }
   private formatEmployees(employees): EmployeeDto[] {
     return employees.map(employee => ({
-      Empresa: employee.Empresa,
-      CPF: employee.CPF,
-      Colaborador: employee.Colaborador,
+      Empresa: employee.Nome_Empresa,    
+      Colaborador: employee.Nome_Colaborador,
       Matricula: employee.Matricula.toString(),
-      DataAdm: dateToUTC(employee.DataAdm),
-      DataNasc: dateToUTC(employee.DataNasc),
-      DescSituacao: employee.DescSituacao,
-      Cargo: employee.Cargo,
-      descCargo: employee.descCargo
+      DataAdm: dateToUTC(employee.Data_Admissao),
+      DataNasc: dateToUTC(employee.Data_Nascimento),      
+      Cargo: employee.Titulo_Cargo
+      
     }));
   }
 
@@ -121,7 +94,7 @@ export class EmployeesService {
           }
 
           console.log('Employee to update', updateData)
-          // await this.sharepointService.updateListItem(listTitle, spEmployee.id, updateData, this.listId);
+          await this.sharepointService.updateListItem(listTitle, spEmployee.id, updateData, this.listId);
           updated++;
         }
       }
@@ -158,7 +131,7 @@ export class EmployeesService {
 
       return `Employees created successfully: ${notFound} and updated successfully ${updated} and deleted successfully ${deleted}`;
     } catch (error: any) {
-      throw new HttpException('Erro ao atualizar a lista do SharePoint', HttpStatus.BAD_REQUEST);
+      throw new HttpException(`Erro ao atualizar a lista do SharePoint ${error}`, HttpStatus.BAD_REQUEST);
     }
   }
 }
