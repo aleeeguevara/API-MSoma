@@ -26,7 +26,7 @@ export class EmployeesService {
     return employees.map(employee => ({
       Empresa: employee.Nome_Empresa,    
       Colaborador: employee.Nome_Colaborador,
-      Matricula: employee.Matricula.toString(),
+      Matricula: employee.Matricula,
       DataAdm: dateToUTC(employee.Data_Admissao),
       DataNasc: dateToUTC(employee.Data_Nascimento),      
       Cargo: employee.Titulo_Cargo
