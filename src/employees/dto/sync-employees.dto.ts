@@ -9,6 +9,8 @@ export interface EmployeeDto {
   DescSituacao: string;
   Cargo: string;
   descCargo: string;
+  Email?: string;
+  CentroCusto?: string;
 }
 export interface SelectedPropsEmployeeDto {
 
@@ -18,4 +20,6 @@ export interface SelectedPropsEmployeeDto {
   DataNasc: Date;  
   Cargo: string;    
   Empresa?: string;
+  Email?: string;
+  CentroCusto?: string;
 }

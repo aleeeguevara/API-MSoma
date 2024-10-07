@@ -34,13 +34,28 @@ export class SharepointService {
     });
   }
   
-  public async getListItems(listTitle: string, siteId: string, listId:string) {
+  public async getListItems(listTitle: string, siteId: string, listId: string) {
+    const client = await this.getGraphClient();
+    const allItems = [];
+    let hasNextPage = true;
+    let skipToken = '';
+  
     try {
-      const axiosInstance = await this.getAxiosInstance();
-      const client = await this.getGraphClient();
-      
-      const response = await client.api(`/sites/${siteId}/lists/${listId}/items`).top(10000).expand('fields').get();
-      return response.value
+      while (hasNextPage) {
+        const response = await client
+          .api(`/sites/${siteId}/lists/${listId}/items`)
+          .top(5000) // Buscar 5000 itens por vez
+          .expand('fields')
+          .skipToken(skipToken)
+          .get();
+  
+        allItems.push(...response.value);
+  
+        skipToken = response['@odata.nextLink'] ? response['@odata.nextLink'].split('$skiptoken=')[1] : '';
+        hasNextPage = !!skipToken; // Continuar se existir mais páginas
+      }
+  
+      return allItems;
     } catch (err) {
       console.error(`Erro ao buscar itens da lista ${listTitle}:`, err);
       throw new HttpException(`Erro ao buscar dados no Microsoft Graph ${listTitle}`, HttpStatus.BAD_REQUEST);
