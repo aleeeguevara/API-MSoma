@@ -30,7 +30,8 @@ export class EmployeesService {
       DataNasc: dateToUTC(employee.Data_Nascimento),      
       Cargo: employee.Titulo_Cargo,
       CentroCusto: employee.Nome_Centro_de_Custo,
-      Email: employee.Email_Comercial.trim()
+      Email: employee.Email_Comercial.trim(),
+      CodigoUsuario: employee.Codigo_Usuario
     }));
   }
 
@@ -38,7 +39,7 @@ export class EmployeesService {
     let employees = this.formatEmployees(employeesDtb);
     console.log('sync employees');
     let updated = 0;
-    let matriculaNotFound = 0;
+    let codigoNotFound = 0;
     let created = 0;
     let deleted = 0;
     let notChanged = 0;
@@ -50,16 +51,16 @@ export class EmployeesService {
       console.log('employeesDB', employees.length);
   
       const updatePromises = employeesSP.map(async (spEmployee) => {
-        const Matricula = spEmployee.Matricula;
+        const codigoUsr = spEmployee.CodigoUsuario;
         let employeeFound: SelectedPropsEmployeeDto | null = null;
   
-        if (Matricula) {
-          const matricula = normalizeName(spEmployee.Matricula);
-          employeeFound = employees.find((c) => normalizeName(c.Matricula) === matricula);
+        if (codigoUsr) {
+          const codigo = normalizeName(spEmployee.CodigoUsuario);
+          employeeFound = employees.find((c) => normalizeName(c.CodigoUsuario) === codigo);
         }
   
         if (!employeeFound) {
-          matriculaNotFound++;
+          codigoNotFound++;
           console.log('Employee to delete', spEmployee.Title);
           const del = await this.sharepointService.deleteListItem(listTitle, spEmployee.id, this.listId);
           console.log(del.message)
@@ -86,6 +87,10 @@ export class EmployeesService {
             hasChanges = true;
           }
         
+          if (employeeFound.CodigoUsuario && employeeFound.CodigoUsuario !== spEmployee.CodigoUsuario) {            
+            updateData.CodigoUsuario = employeeFound.CodigoUsuario;
+            hasChanges = true;
+          }
           if (employeeFound.Matricula && employeeFound.Matricula !== spEmployee.Matricula) {            
             updateData.Matricula = employeeFound.Matricula;
             hasChanges = true;
@@ -124,8 +129,8 @@ export class EmployeesService {
       await Promise.all(updatePromises);
   
       const employeesToCreate = employees.filter((empl) => {
-        const matricula = empl.Matricula;
-        return !employeesSP.some((colSP) => colSP.Matricula === matricula);
+        const codUser = empl.CodigoUsuario;
+        return !employeesSP.some((colSP) => colSP.CodigoUsuario === codUser);
       });
   
       const createPromises = employeesToCreate.map(async (colab) => {
@@ -140,12 +145,13 @@ export class EmployeesService {
             CentroCusto: colab.CentroCusto,
             Email: colab.Email,
             Ativo: true,
+            CodigoUsuario: colab.CodigoUsuario
           },
         };
   
         try {
           await this.sharepointService.createListItem(listTitle, payload, this.listId);
-          console.log('Employee to create', payload.fields.Title);
+          console.log('Colaborador a criar', payload.fields.Title);
           created++;
         } catch (error) {
           throw new HttpException('Erro ao criar colaborador', HttpStatus.BAD_REQUEST);
@@ -154,7 +160,7 @@ export class EmployeesService {
   
       await Promise.all(createPromises);
   
-      return `Employees created successfully: ${created}, updated successfully: ${updated}, not changed: ${notChanged}, deleted successfully: ${deleted}, and matriculas not found: ${matriculaNotFound}`;
+      return `Colaboradores Criados com sucesso: ${created}, updated successfully: ${updated}, não alterados: ${notChanged}, deletados com sucesso: ${deleted}, and Códigos de Usuário não encontrados: ${codigoNotFound}`;
     } catch (error) {
       throw new HttpException(`Erro ao atualizar a lista do SharePoint: ${error}`, HttpStatus.BAD_REQUEST);
     }

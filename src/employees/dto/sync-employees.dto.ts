@@ -11,6 +11,7 @@ export interface EmployeeDto {
   descCargo: string;
   Email?: string;
   CentroCusto?: string;
+  CodigoUsuario?: string
 }
 export interface SelectedPropsEmployeeDto {
 
@@ -22,4 +23,5 @@ export interface SelectedPropsEmployeeDto {
   Empresa?: string;
   Email?: string;
   CentroCusto?: string;
+  CodigoUsuario?: string;
 }
