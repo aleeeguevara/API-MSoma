@@ -62,17 +62,21 @@ export class SharepointService {
     }
   }
 
-  public async updateListItem(listTitle: string, itemId: number, payload: any, listId) {
+  public async updateListItem(listTitle: string, itemId: number, payload: any, listId: string) {
     const client = await this.getGraphClient();
-
-    try{
+    
+    try {
       const response = await client
-      .api(`/sites/${process.env.SITE_ID}/lists/${listId}/items/${itemId}`)
-      .update({
-        fields: payload,
+        .api(`/sites/${process.env.SITE_ID}/lists/${listId}/items/${itemId}`)
+        .update({
+          fields: payload,
+        });
+      return response;
+    } catch (err) {
+      console.error(`Erro ao atualizar dados na lista: ${listTitle}. Item ID: ${itemId}`, {
+        payload,
+        error: err.response?.data || err.message,
       });
-      return response
-    }catch(err){
       throw new HttpException(`Erro ao atualizar dados na lista: ${listTitle}`, HttpStatus.BAD_REQUEST, err);
     }
   }

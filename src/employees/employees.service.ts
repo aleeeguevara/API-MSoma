@@ -7,6 +7,7 @@ import { EmployeeDto, SelectedPropsEmployeeDto } from './dto/sync-employees.dto'
 import { normalizeName } from '../utils/normalizeName.regex';
 import { ConfigService } from '@nestjs/config';
 import { checkUserActive } from 'src/utils/checkUserActive';
+import { sanitizeUpdateData } from 'src/utils/sanitizeString';
 
 @Injectable()
 export class EmployeesService {
@@ -25,13 +26,13 @@ export class EmployeesService {
     return employees.map(employee => ({
       Empresa: employee.Nome_Empresa,    
       Colaborador: employee.Nome_Colaborador || employee.Apelido_Colaborador,
-      Matricula: employee.Matricula,
+      Matricula: employee.Matricula.toString(),
       DataAdm: dateToUTC(employee.Data_Admissao),
       DataNasc: dateToUTC(employee.Data_Nascimento),      
       Cargo: employee.Titulo_Cargo,
       CentroCusto: employee.Nome_Centro_de_Custo,
       Email: employee.Email_Comercial.trim(),
-      CodigoUsuario: employee.Codigo_Usuario
+      CodigoUsuario: employee.Codigo_Usuario.toString()
     }));
   }
 
@@ -115,14 +116,14 @@ export class EmployeesService {
             updateData.Email = employeeFound.Email;
             hasChanges = true;
           }
-        
           if (hasChanges) {
-            console.log('Employee found to update', updateData);
+            const sanitizedData = sanitizeUpdateData(updateData);
+            console.log('Employee found to update', sanitizedData);
             updated++;
-            await this.sharepointService.updateListItem(listTitle, spEmployee.id, updateData, this.listId);
+            await this.sharepointService.updateListItem(listTitle, spEmployee.id, sanitizedData, this.listId);
           } else {            
             notChanged++;
-          }
+          }          
         }
       });
   
@@ -159,7 +160,7 @@ export class EmployeesService {
       });
   
       await Promise.all(createPromises);
-  
+      console.log(`Colaboradores Criados com sucesso: ${created}, updated successfully: ${updated}, não alterados: ${notChanged}, deletados com sucesso: ${deleted}, and Códigos de Usuário não encontrados: ${codigoNotFound}`)
       return `Colaboradores Criados com sucesso: ${created}, updated successfully: ${updated}, não alterados: ${notChanged}, deletados com sucesso: ${deleted}, and Códigos de Usuário não encontrados: ${codigoNotFound}`;
     } catch (error) {
       throw new HttpException(`Erro ao atualizar a lista do SharePoint: ${error}`, HttpStatus.BAD_REQUEST);
